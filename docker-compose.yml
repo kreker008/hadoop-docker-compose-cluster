@@ -1,0 +1,131 @@
+version: "3.7"
+
+x-hadoop-build_env:
+    &hadoop-build-env
+    HADOOP_GROUP: ${HADOOP_GROUP}
+    HADOOP_USER: ${HADOOP_USER}
+    HADOOP_USER_PASS: ${HADOOP_USER_PASS}
+    HADOOP_ARCHIVE_URL: ${HADOOP_ARCHIVE_URL}
+    HADOOP_DATANODES: ${HADOOP_DATANODES}
+    SPARK_ARCHIVE_URL: ${SPARK_ARCHIVE_URL}
+    SPARK_HOME: ${SPARK_HOME}
+    HIVE_HOME: ${HIVE_HOME}
+    HIVE_ARCHIVE_URL: ${HIVE_ARCHIVE_URL}
+    HIVE_JDBC_ULR: ${HIVE_JDBC_ULR}
+
+services:
+    hadoop_core_image:
+        build: 
+            context: .
+            dockerfile: ./images/hadoop_core/Dockerfile
+            args:
+                <<: *hadoop-build-env
+        image: hadoop_core
+    hivemetastore:
+        image: postgres:16.2
+        container_name: hivemetastore
+        environment:
+            POSTGRES_DB: ${HIVEMETASTORE_DB}
+            POSTGRES_USER: ${HIVEMETASTORE_DB_USERNAME}
+            POSTGRES_PASSWORD: ${HIVEMETASTORE_DB_PASS}
+        volumes:
+            - ./volumes/hivemetastore:/var/lib/postgresql/data
+    namenode:
+        build:
+            context: .
+            dockerfile: ./images/namenode/Dockerfile
+            args:
+                <<: *hadoop-build-env
+        depends_on: 
+            - hivemetastore
+            - hadoop_core_image
+        env_file: .env 
+        container_name: "namenode" 
+        ports:
+            #ssh
+            - 43156:22
+            #HDFS RPC
+            - 8020:${NAMENODE_RPC_PORT}
+            #HDFS ui
+            - 9870:9870
+            #YARN ui
+            - 8088:8088
+            #Master spark ui
+            - 8080:8080
+            #Master spark - spark protocl port
+            - 7077:7077
+            #HIVE(hiveserver2) jdbc port
+            - 10000:10000
+            #Spark history server
+            - 18080:18080
+            #Livy REST
+            - 8998:8998
+        volumes:
+            - ./volumes/configs/:/root/utils/configs/
+            - ./volumes/namenodehdfs/:/hadoop/hdfs/namenode
+        command:
+            - -c
+            - '/root/utils/configs/startnamenode.sh;
+               tail -F anything'
+    datanode1:
+        image: hadoop_core
+        depends_on:
+            - hadoop_core_image
+            - namenode
+        env_file: .env
+        container_name: "datanode1" 
+        volumes:
+            - ./volumes/configs/:/root/utils/configs/
+            - ./volumes/datanodehdfs1/:/hadoop/hdfs/datanode
+        command:
+            - -c
+            - '/root/utils/configs/startdatanode.sh;
+               tail -F anything'
+    datanode2:
+        image: hadoop_core
+        depends_on:
+            - hadoop_core_image
+            - namenode
+        env_file: .env
+        container_name: "datanode2" 
+        volumes:
+            - ./volumes/configs/:/root/utils/configs/
+            - ./volumes/datanodehdfs2/:/hadoop/hdfs/datanode
+        command:
+            - -c
+            - '/root/utils/configs/startdatanode.sh;
+               tail -F anything'
+    datanode3:
+        image: hadoop_core
+        depends_on:
+            - hadoop_core_image
+            - namenode
+        env_file: .env
+        container_name: "datanode3" 
+        volumes:
+            - ./volumes/configs/:/root/utils/configs/
+            - ./volumes/datanodehdfs3/:/hadoop/hdfs/datanode
+        command:
+            - -c
+            - '/root/utils/configs/startdatanode.sh;
+               tail -F anything'
+    huedb:
+        image: postgres:16.2
+        container_name: huedb
+        volumes:
+          - ./volumes/huedb:/var/lib/postgresql/data
+        environment:
+          POSTGRES_USER: hue
+          POSTGRES_PASSWORD: hue
+          POSTGRES_DB: hue
+        command: -p 5433
+    hue:
+        image: gethue/hue:20240410-140101
+        container_name: hue
+        ports:
+          - "8888:8888"
+        volumes:
+          - ./volumes/hue/hue.ini:/usr/share/hue/desktop/conf/hue.ini
+        depends_on:
+          - huedb
+        restart: on-failure
