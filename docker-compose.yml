@@ -11,8 +11,19 @@ x-hadoop-build_env:
     SPARK_HOME: ${SPARK_HOME}
     HIVE_HOME: ${HIVE_HOME}
     HIVE_ARCHIVE_URL: ${HIVE_ARCHIVE_URL}
-    HIVE_JDBC_ULR: ${HIVE_JDBC_ULR}
+    POSTGRES_JDBC_URL: ${POSTGRES_JDBC_URL}
 
+x-hadoop-services-hosts:
+    &hadoop-services-hosts
+    extra_hosts:
+        - "hivemetastore:172.19.34.34"
+        - "namenode:172.19.34.35"
+        - "datanode1:172.19.34.36"
+        - "datanode2:172.19.34.37"
+        - "datanode3:172.19.34.38"
+        - "huedb:172.19.34.39"
+        - "hue:172.19.34.40"
+    
 services:
     hadoop_core_image:
         build: 
@@ -30,12 +41,17 @@ services:
             POSTGRES_PASSWORD: ${HIVEMETASTORE_DB_PASS}
         volumes:
             - ./volumes/hivemetastore:/var/lib/postgresql/data
+        networks:
+            hadoop_net:
+                ipv4_address: 172.19.34.34
+        <<: *hadoop-services-hosts
     namenode:
         build:
             context: .
             dockerfile: ./images/namenode/Dockerfile
             args:
                 <<: *hadoop-build-env
+        image: namenode_image
         depends_on: 
             - hivemetastore
             - hadoop_core_image
@@ -67,6 +83,10 @@ services:
             - -c
             - '/root/utils/configs/startnamenode.sh;
                tail -F anything'
+        networks:
+            hadoop_net:
+                ipv4_address: 172.19.34.35
+        <<: *hadoop-services-hosts
     datanode1:
         image: hadoop_core
         depends_on:
@@ -81,6 +101,10 @@ services:
             - -c
             - '/root/utils/configs/startdatanode.sh;
                tail -F anything'
+        networks:
+            hadoop_net:
+                ipv4_address: 172.19.34.36
+        <<: *hadoop-services-hosts
     datanode2:
         image: hadoop_core
         depends_on:
@@ -95,6 +119,10 @@ services:
             - -c
             - '/root/utils/configs/startdatanode.sh;
                tail -F anything'
+        networks:
+            hadoop_net:
+                ipv4_address: 172.19.34.37
+        <<: *hadoop-services-hosts
     datanode3:
         image: hadoop_core
         depends_on:
@@ -109,6 +137,10 @@ services:
             - -c
             - '/root/utils/configs/startdatanode.sh;
                tail -F anything'
+        networks:
+            hadoop_net:
+                ipv4_address: 172.19.34.38
+        <<: *hadoop-services-hosts
     huedb:
         image: postgres:16.2
         container_name: huedb
@@ -119,6 +151,9 @@ services:
           POSTGRES_PASSWORD: hue
           POSTGRES_DB: hue
         command: -p 5433
+        networks:
+            hadoop_net:
+                ipv4_address: 172.19.34.39
     hue:
         image: gethue/hue:20240410-140101
         container_name: hue
@@ -129,3 +164,14 @@ services:
         depends_on:
           - huedb
         restart: on-failure
+        networks:
+            hadoop_net:
+                ipv4_address: 172.19.34.40
+        <<: *hadoop-services-hosts
+                
+networks:
+  hadoop_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.34.0/24

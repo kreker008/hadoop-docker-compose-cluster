@@ -7,7 +7,7 @@ ARG HADOOP_ARCHIVE_URL=https://dlcdn.apache.org/hadoop/common/hadoop-3.4.0/hadoo
 ARG HADOOP_HOME=/usr/local/hadoop
 ARG SPARK_HOME=/usr/local/spark
 ARG SPARK_ARCHIVE_URL=https://dlcdn.apache.org/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3.tgz
-
+ARG POSTGRES_JDBC_URL=https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar
 
 ENV HADOOP_GROUP $HADOOP_GROUP
 ENV HADOOP_USER $HADOOP_USER
@@ -26,7 +26,8 @@ ENV SPARK_ARCHIVE_URL=$SPARK_ARCHIVE_URL
 ENV SPARK_HOME $SPARK_HOME
 ENV PYSPARK_PYTHON /usr/bin/python3
 ENV PYSPARK_DRIVER_PYTHON python3
-ENV PATH "$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$SPARK_HOME/bin"	
+ENV PATH "$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$SPARK_HOME/bin"
+ENV POSTGRES_JDBC_URL=$POSTGRES_JDBC_URL	
 
 RUN apt update -y && apt upgrade -y
 #Установка JRE, SSH, python
@@ -61,10 +62,14 @@ RUN tar -zxf spark*.tgz -C $SPARK_HOME --strip-components 1
 RUN rm spark*.tgz
 RUN chown -R $HADOOP_USER:$HADOOP_GROUP $SPARK_HOME
 RUN mkdir /tmp/spark-events
+RUN mkdir /var/log/spark
 RUN chown -R $HADOOP_USER:$HADOOP_GROUP /tmp/spark-events
+RUN chown -R $HADOOP_USER:$HADOOP_GROUP /var/log/spark
 #Настройка *env.sh spark
 RUN cp $SPARK_HOME/conf/spark-env.sh.template $SPARK_HOME/conf/spark-env.sh
 RUN printf "export SPARK_MASTER_HOST=namenode\nexport PYSPARK_PYTHON=/usr/bin/python3\nexport PYSPARK_DRIVER_PYTHON=python3\nexport HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop" >> $SPARK_HOME/conf/spark-env.sh
+RUN wget $POSTGRES_JDBC_URL
+RUN cp postgresql*.jar $SPARK_HOME/jars/ 
 
 USER $HADOOP_USER
 #Настройка ssh

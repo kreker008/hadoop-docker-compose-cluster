@@ -2,7 +2,6 @@ FROM hadoop_core
 
 ARG HIVE_HOME=/usr/local/hive
 ARG HIVE_ARCHIVE_URL=https://dlcdn.apache.org/hive/hive-4.0.0/apache-hive-4.0.0-bin.tar.gz
-ARG HIVE_JDBC_ULR=https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgresql-42.7.3.jar
 ARG LIVY_HOME=/usr/local/livy
 
 ENV HIVE_HOME $HIVE_HOME
@@ -19,8 +18,7 @@ RUN mkdir $HIVE_HOME
 RUN wget $HIVE_ARCHIVE_URL
 RUN tar -zxf apache-hive*.tar.gz -C $HIVE_HOME --strip-components 1
 RUN rm apache-hive*.tar.gz
-RUN wget $HIVE_JDBC_ULR
-RUN mv postgresql*.jar $HIVE_HOME/lib/ 
+RUN cp postgresql*.jar $HIVE_HOME/lib/ 
 RUN cp $HIVE_HOME/conf/hive-env.sh.template $HIVE_HOME/conf/hive-env.sh
 RUN chown -R $HADOOP_USER:$HADOOP_GROUP $HIVE_HOME
 RUN printf "\nexport HADOOP_HOME=$HADOOP_HOME " >> $HIVE_HOME/conf/hive-env.sh
