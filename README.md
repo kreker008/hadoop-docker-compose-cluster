@@ -1,4 +1,6 @@
 # hadoop-docker-compose-cluster
+## Architecture
+![Hadoop_cluster.png]((https://github.com//kreker008/hadoop-docker-compose-cluster/blob/main/Hadoop_cluster.png?raw=true))
 ## Quick start
 `docker compose up -d`
 
