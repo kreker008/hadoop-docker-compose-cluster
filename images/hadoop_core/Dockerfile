@@ -29,25 +29,17 @@ ENV PYSPARK_DRIVER_PYTHON python3
 ENV PATH "$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$SPARK_HOME/bin"
 ENV POSTGRES_JDBC_URL=$POSTGRES_JDBC_URL	
 
-RUN apt update -y && apt upgrade -y
-#Установка JRE, SSH, python
-RUN apt install -y openjdk-8-jdk openssh-server gettext-base
+RUN apt update -y && apt upgrade -y && apt install -y openjdk-8-jdk openssh-server gettext-base
 
 #Добавление группы и пользователя для hadoop
-RUN addgroup ${HADOOP_GROUP}
-RUN printf "${HADOOP_USER_PASS}\n${HADOOP_USER_PASS}\nY\n" | adduser --ingroup ${HADOOP_GROUP} ${HADOOP_USER}
+RUN addgroup ${HADOOP_GROUP} && printf "${HADOOP_USER_PASS}\n${HADOOP_USER_PASS}\nY\n" | adduser --ingroup ${HADOOP_GROUP} ${HADOOP_USER}
 
 #*** HADOOP ***
 #Скачивание и распаковка hadoop
 RUN mkdir $HADOOP_HOME
-RUN wget $HADOOP_ARCHIVE_URL
-RUN tar -zxf hadoop-*.tar.gz -C $HADOOP_HOME --strip-components 1
-RUN rm hadoop-*.tar.gz
-RUN mkdir $HADOOP_HOME/logs
-RUN mkdir -p /hadoop/hdfs/namenode
-RUN mkdir -p /hadoop/hdfs/datanode
-RUN chown -R $HADOOP_USER:$HADOOP_GROUP $HADOOP_HOME
-RUN chown -R $HADOOP_USER:$HADOOP_GROUP /hadoop/hdfs/
+RUN wget $HADOOP_ARCHIVE_URL && tar -zxf hadoop-*.tar.gz -C $HADOOP_HOME --strip-components 1 && rm hadoop-*.tar.gz
+RUN mkdir $HADOOP_HOME/logs && mkdir -p /hadoop/hdfs/namenode && mkdir -p /hadoop/hdfs/datanode
+RUN chown -R $HADOOP_USER:$HADOOP_GROUP $HADOOP_HOME && chown -R $HADOOP_USER:$HADOOP_GROUP /hadoop/hdfs/
 #Настройка *env.sh hadoop
 RUN sed -i "s/# export JAVA_HOME=/export JAVA_HOME=\/usr\/lib\/jvm\/java-8-openjdk-amd64/" $HADOOP_HOME/etc/hadoop/hadoop-env.sh
 #Исправляет ошибку доступа через рефлексию JAVA
@@ -56,26 +48,22 @@ RUN sed -i "s/# export JAVA_HOME=/export JAVA_HOME=\/usr\/lib\/jvm\/java-8-openj
 
 #*** SPARK ***
 #Скачивание и распаковка spark
-RUN mkdir $SPARK_HOME
-RUN wget $SPARK_ARCHIVE_URL
-RUN tar -zxf spark*.tgz -C $SPARK_HOME --strip-components 1
-RUN rm spark*.tgz
-RUN chown -R $HADOOP_USER:$HADOOP_GROUP $SPARK_HOME
-RUN mkdir /tmp/spark-events
-RUN mkdir /var/log/spark
-RUN chown -R $HADOOP_USER:$HADOOP_GROUP /tmp/spark-events
-RUN chown -R $HADOOP_USER:$HADOOP_GROUP /var/log/spark
+RUN mkdir $SPARK_HOME && mkdir /tmp/spark-events && mkdir /var/log/spark
+RUN wget $SPARK_ARCHIVE_URL && tar -zxf spark*.tgz -C $SPARK_HOME --strip-components 1 && rm spark*.tgz
+RUN chown -R $HADOOP_USER:$HADOOP_GROUP $SPARK_HOME &&\
+	chown -R $HADOOP_USER:$HADOOP_GROUP /tmp/spark-events &&\
+	chown -R $HADOOP_USER:$HADOOP_GROUP /var/log/spark
 #Настройка *env.sh spark
 RUN cp $SPARK_HOME/conf/spark-env.sh.template $SPARK_HOME/conf/spark-env.sh
 RUN printf "export SPARK_MASTER_HOST=namenode\nexport PYSPARK_PYTHON=/usr/bin/python3\nexport PYSPARK_DRIVER_PYTHON=python3\nexport HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop" >> $SPARK_HOME/conf/spark-env.sh
-RUN wget $POSTGRES_JDBC_URL
-RUN cp postgresql*.jar $SPARK_HOME/jars/ 
+#Установка JDBC
+RUN wget $POSTGRES_JDBC_URL && cp postgresql*.jar $SPARK_HOME/jars/ 
 
 USER $HADOOP_USER
 #Настройка ssh
-RUN printf "\n" | ssh-keygen -t rsa -P ""
-RUN cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
-RUN printf "\nHost *\n\tStrictHostKeyChecking no" >> ~/.ssh/config
+RUN printf "\n" | ssh-keygen -t rsa -P "" &&\
+	cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys &&\
+	printf "\nHost *\n\tStrictHostKeyChecking no" >> ~/.ssh/config
 
 USER root
 ENTRYPOINT ["bash"]
