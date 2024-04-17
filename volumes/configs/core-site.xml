@@ -9,11 +9,23 @@
 		<name>hadoop.tmp.dir</name>
 	</property>
 	<property>
-		<name>hadoop.proxyuser.server.hosts</name>
+		<name>hadoop.proxyuser.${HADOOP_USER}.hosts</name>
 		<value>*</value>
 	</property>
 	<property>
-		<name>hadoop.proxyuser.server.groups</name>
+		<name>hadoop.proxyuser.${HADOO_GROUP}.groups</name>
+		<value>*</value>
+	</property>
+	<property>
+		<name>hadoop.proxyuser.supergroup.groups</name>
+		<value>*</value>
+	</property>
+	<property>
+		<name>hadoop.proxyuser.hue.hosts</name>
+		<value>*</value>
+	</property>
+	<property>
+		<name>hadoop.proxyuser.hue.groups</name>
 		<value>*</value>
 	</property>
 </configuration>

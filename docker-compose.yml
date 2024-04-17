@@ -101,6 +101,8 @@ services:
             - -c
             - '/root/utils/configs/startdatanode.sh;
                tail -F anything'
+        ports:       
+            - 8042:8042
         networks:
             hadoop_net:
                 ipv4_address: 172.19.34.36
@@ -119,6 +121,8 @@ services:
             - -c
             - '/root/utils/configs/startdatanode.sh;
                tail -F anything'
+        ports:       
+            - 8043:8042
         networks:
             hadoop_net:
                 ipv4_address: 172.19.34.37
@@ -137,6 +141,8 @@ services:
             - -c
             - '/root/utils/configs/startdatanode.sh;
                tail -F anything'
+        ports:       
+            - 8044:8042
         networks:
             hadoop_net:
                 ipv4_address: 172.19.34.38

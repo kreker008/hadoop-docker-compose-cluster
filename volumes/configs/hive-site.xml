@@ -35,4 +35,20 @@
 		<name>hive.server2.enable.doAs</name>
 		<value>false</value>
 	</property>
+	<property>
+		<name>hive.execution.engine</name>
+		<value>spark</value>
+	</property>
+	<property>
+		<name>spark.master</name>
+		<value>spark://namenode:7077</value>
+	</property>
+	<property>
+		<name>spark.yarn.jars</name>
+		<value>hdfs://namenode:${NAMENODE_RPC_PORT}/spark-jars/jars/*</value>
+	</property>
+	<property>
+		<name>hive.metastore.warehouse.dir</name>
+		<value>/apps/hive/warehouse</value>
+	</property>
 </configuration>
