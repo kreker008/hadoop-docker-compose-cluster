@@ -8,7 +8,7 @@
 ## About version
 | Service | Version |
 |---------|---------|
-| Hadoop  | 4.4.0   |
+| Hadoop  | 3.4.0   |
 | Spark   | 3.5.1   |
 | Hive    | 4.0.0   |
 | Livy    | 0.9.0   |
